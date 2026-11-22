@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Token Radar v3 — the 198 protocols with no token yet</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header>
+  <h1>Token Radar</h1>
+  <p class="lede">198 protocols with no token recorded, ranked by what their token would be worth — the size curve's price times the odds their category ever launches one. Every value is priced, every farm is costed, every number recomputed in your browser from the model beside it.</p>
+  <p class="meta" id="meta">Snapshot 2026-11-14 · 758 protocols · model fitted at build time from the 128 live tokens</p>
+  <p class="badges" id="badges"></p>
+</header>
+
+<section id="kpis" aria-label="Validation"></section>
+
+<section id="ledger" aria-label="Accounting">
+  <h2>Where the 758 went</h2>
+  <div id="ledgerbar"></div>
+  <p id="ledgertext" class="note"></p>
+</section>
+
+<section id="pricing" aria-label="Pricing">
+  <div class="panel" id="panel-value">
+    <h2>How a value is built</h2>
+    <p class="formula" id="formula"></p>
+    <p id="fitline" class="note"></p>
+    <p class="note">Ranked value = curve × launch share: a $92.7M curve at 12.8% odds ranks $11.9M, below a $26.1M curve at 61.9% ranking $16.2M. The band is the leave-one-out error: P10 ×0.091, P90 ×11.98.</p>
+  </div>
+  <div class="panel" id="panel-farm">
+    <h2>How a farm is priced</h2>
+    <p class="formula">slice = drop × curve × deposit / TVL · net = slice − gas · break-even = gas / slice · EV = odds × slice − gas</p>
+    <p class="note">The slice is cut from the <b>curve</b> value, never the ranked value — the odds are already in the rank. Verdict: <b>FARM</b> when break-even ≤ odds, <b>MARGINAL</b> when odds &lt; break-even ≤ 1, <b>SKIP</b> when break-even &gt; 1. At $1,000 and 7%: <b id="verdictcounts">30 FARM / 45 MARGINAL / 123 SKIP</b>.</p>
+    <p class="note" id="honestline">The plan's own capital is $50–$250 by TVL — money put to work in the protocol, not spent; only the gas is spent. It is not the deposit, which only sizes the slice.</p>
+  </div>
+</section>
+
+<section id="spotlight" aria-label="Top five"></section>
+
+<div class="controls">
+  <input type="search" id="q" placeholder="Search a protocol…" aria-label="Search">
+  <select id="category" aria-label="Category"><option value="">All categories</option></select>
+  <select id="chain" aria-label="Chain"><option value="">All chains</option></select>
+  <select id="verdict" aria-label="Verdict">
+    <option value="">All verdicts</option>
+    <option value="FARM">FARM</option>
+    <option value="MARGINAL">MARGINAL</option>
+    <option value="SKIP">SKIP</option>
+  </select>
+  <label class="ctl">Deposit
+    <select id="deposit">
+      <option value="250">$250</option>
+      <option value="1000" selected>$1,000</option>
+      <option value="10000">$10,000</option>
+    </select>
+  </label>
+  <label class="ctl">Drop share
+    <select id="drop">
+      <option value="0.035">3.5%</option>
+      <option value="0.07" selected>7%</option>
+      <option value="0.14">14%</option>
+    </select>
+  </label>
+  <label class="watch"><input type="checkbox" id="watchonly"> Watchlist only</label>
+  <div class="tabs" role="tablist">
+    <button data-tab="board" class="on" role="tab">Board</button>
+    <button data-tab="model" role="tab">Model</button>
+    <button data-tab="live" role="tab">Live tokens</button>
+    <button data-tab="cats" role="tab">Categories</button>
+    <button data-tab="farm" role="tab">Farm economics</button>
+  </div>
+</div>
+
+<main>
+  <div id="view-board">
+    <p class="count" id="count"></p>
+    <table id="board">
+      <colgroup><col style="width:34px"><col style="width:140px"><col style="width:72px"><col style="width:60px"><col style="width:58px"><col style="width:62px"><col style="width:118px"><col style="width:72px"><col style="width:72px"><col style="width:62px"><col style="width:82px"><col style="width:84px"><col></colgroup>
+      <thead><tr>
+        <th class="num">#</th><th>Protocol</th><th class="num">TVL</th><th class="num">7d</th><th class="num">No token for</th><th class="num">Launch odds</th><th class="num">Implied value</th><th class="num">Slice if launch</th><th class="num">Net if launch</th><th class="num">Break-even</th><th class="num">Net/hour</th><th>Verdict</th><th>Farm plan</th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+  <div id="view-model" hidden>
+    <h2>The model, and how it was tested</h2>
+    <p id="model-intro"></p>
+    <h3>Leave-one-out, 128 live tokens</h3>
+    <table id="ablation"><thead><tr><th>Model</th><th class="num">Median miss</th><th class="num">Within 3×</th><th class="num">Within 10×</th></tr></thead><tbody></tbody></table>
+    <p class="note">The growth, age and breadth terms add no pricing accuracy: size curve alone ×3.40, this model ×3.48, full weight ×3.68. They stay at small weights because the bounty names them — the table is the evidence, not a claim.</p>
+    <h3>Walk-forward and range-hold</h3>
+    <p id="wfline"></p>
+    <h3>Launch odds, held out</h3>
+    <p id="oddsline"></p>
+    <table id="agerates"><thead><tr><th>Age</th><th class="num">Protocols</th><th class="num">Share recording a token</th></tr></thead><tbody></tbody></table>
+    <p class="note">Stock shares, not forecasts. The per-row odds are the category's share.</p>
+    <h3>Category offsets</h3>
+    <p class="note">Median residual per category, shrunk k = 20. No live token → 0. Highest first.</p>
+    <table id="offsets"><thead><tr><th>Category</th><th class="num">Live</th><th class="num">Offset (log10)</th><th class="num">Launch share</th><th class="num">On the board</th></tr></thead><tbody></tbody></table>
+  </div>
+  <div id="view-live" hidden>
+    <h2>The 128 live tokens the curve is fitted on</h2>
+    <p class="note">Every snapshot protocol with a token and a market cap above zero. Largest first.</p>
+    <table id="livetable"><thead><tr><th>Protocol</th><th>Category</th><th class="num">TVL</th><th class="num">Market cap</th><th class="num">Multiple</th></tr></thead><tbody></tbody></table>
+  </div>
+  <div id="view-cats" hidden>
+    <h2>All 53 categories</h2>
+    <p class="note">Launch share = share of the category that already records a token. No live token → no offset, priced at the bare curve.</p>
+    <table id="catstable"><thead><tr><th>Category</th><th class="num">Protocols</th><th class="num">With a token</th><th class="num">Launch share</th><th class="num">Live</th><th class="num">Offset</th><th class="num">On the board</th></tr></thead><tbody></tbody></table>
+  </div>
+  <div id="view-farm" hidden>
+    <h2>Farm economics</h2>
+    <p class="note">Verdict counts at each deposit and drop share, recomputed live. The deposit sizes the slice; capital ($50–$250 by TVL) and gas ($1–$10 a step) stay fixed.</p>
+    <table id="farmmatrix"><thead><tr><th>Deposit</th><th class="num">Drop 3.5%</th><th class="num">Drop 7%</th><th class="num">Drop 14%</th></tr></thead><tbody></tbody></table>
+    <h3>Worked examples, at $1,000 and a 7% drop</h3>
+    <div id="worked"></div>
+    <h3>Best net per hour, at $1,000 and 7%</h3>
+    <table id="besthour"><thead><tr><th>Protocol</th><th class="num">Slice</th><th class="num">Net if launch</th><th class="num">Break-even</th><th class="num">EV</th><th class="num">Net/hour</th></tr></thead><tbody></tbody></table>
+    <p class="note">Net per hour divides expected value by active minutes only. The 30–60 day hold is waiting, not work.</p>
+  </div>
+  <footer>
+    <h2>Assumptions, stated plainly</h2>
+    <p class="note">The snapshot is DefiLlama data as of 2026-11-14, 758 protocols at or above $5M TVL. "No token recorded" means the record carries no gecko_id and no symbol — it is not proof a token does not exist. The drop share is a guess (7% by default, change it above) — no protocol on this board has promised one. The launch odds are stock shares, not forecasts. Nothing here is investment advice.</p>
+  </footer>
+</main>
+
+<dialog id="detail">
+  <div class="dlg-head">
+    <div><h2 id="d-name"></h2><div class="sub" id="d-sub"></div></div>
+    <div class="val" id="d-val"></div>
+    <button class="dlg-close" id="d-close" aria-label="Close">✕</button>
+  </div>
+  <div class="dlg-body">
+    <div class="chips" id="d-chips"></div>
+    <div class="econgrid" id="d-econ"></div>
+    <p class="note" id="d-tier"></p>
+    <p class="note" id="d-pref"></p>
+    <p class="breakdown" id="d-break"></p>
+    <div class="checks" id="d-checks"></div>
+    <ol class="steps" id="d-steps"></ol>
+    <p class="totals" id="d-totals"></p>
+  </div>
+</dialog>
+
+<script src="00-model.js"></script>
+<script src="../data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
